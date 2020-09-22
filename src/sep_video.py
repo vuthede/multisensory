@@ -269,6 +269,7 @@ def find_cam(ims, samples, arg, frame_start, fps):
 
 def run(vid_file, start_time, dur, pr, gpu, buf = 0.05, mask = None, arg = None, net = None):
   print pr
+  buf=0
   dur = dur + buf
 
   # Devu added
@@ -301,8 +302,8 @@ def run(vid_file, start_time, dur, pr, gpu, buf = 0.05, mask = None, arg = None,
     print "sample per frame ", pr.samples_per_frame, "with fps : ", pr.fps
     print "sample frames in config: ", pr.sampled_frames
    
-    # if samples_src.shape[0] < pr.num_samples:
-    #   return None
+    if samples_src.shape[0] < pr.num_samples:
+      return None
       
     ims = map(ig.load, sorted(ut.glob(vid_path, 'small_*.png')))
     ims = np.array(ims)
@@ -359,14 +360,14 @@ def get_duration_video_file(f,fps):
   cap = cv2.VideoCapture(f)
   num_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
   if fps is None:
-    fps = int(cap.get(cv2.CAP_PROP_FPS))
+    fps = cap.get(cv2.CAP_PROP_FPS)
   
 
   return num_frames/float(fps)
 
 def get_fps_video_file(f):
   cap = cv2.VideoCapture(f)
-  fps = int(cap.get(cv2.CAP_PROP_FPS))
+  fps = cap.get(cv2.CAP_PROP_FPS)
 
   return fps
 
@@ -411,13 +412,13 @@ if __name__ == '__main__':
   import glob
   data = "/home/vuthede/data/segment_clean/"
   files = glob.glob(data +  "/*/*.mp4")
-  for f in files:
+  for f in files[:1]:
     print "This is file----------------------------------------", f
 
     # f = "/home/vuthede/data/segment_clean/Oxymoron Antithesis Paradox/227.200000_230.960000.mp4"
     # f = "/home/vuthede/data/segment_clean/Oxymoron Antithesis Paradox/215.520000_226.320000.mp4"
 
-
+    f = "/home/vuthede/data/segment_clean/Catherine Steiner-Adair How Technology Affects Child Development/90.131711_93.176422.mp4"
     duration = get_duration_video_file(f,None)
     print "Duration haha:", duration
     # arg.duration_mult = np.ceil(duration/sep_params.VidDur) 
