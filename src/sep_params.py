@@ -13,7 +13,7 @@ def base_path():
 def pretrain_path():
   return '../results/nets/sep'
 
-def base(name, num_gpus = 1, batch_size = 6, vid_dur = None, samp_sr = 21000., resdir = None):
+def base(name, num_gpus = 1, batch_size = 6, fps=29.97, vid_dur = None, samp_sr = 21000., resdir = None):
   if vid_dur is None:
     vid_dur = VidDur
 
@@ -22,7 +22,8 @@ def base(name, num_gpus = 1, batch_size = 6, vid_dur = None, samp_sr = 21000., r
     resdir = ab(pj(pretrain_path(), name))
 
   total_dur = 5.
-  fps = 29.97
+  # fps = 29.97
+  fps = fps
   frame_dur = 1./fps
   pr = Params(resdir = resdir,
               train_iters = 160000,
@@ -108,8 +109,8 @@ def base(name, num_gpus = 1, batch_size = 6, vid_dur = None, samp_sr = 21000., r
   pr.num_samples = int(round(pr.samples_per_frame*pr.sampled_frames))
   return pr
 
-def full(num_gpus = 1, vid_dur = VidDur, batch_size = 6, **kwargs):
-  pr = base('full', num_gpus, vid_dur = vid_dur, batch_size = batch_size, **kwargs)
+def full(num_gpus = 1, vid_dur = VidDur, batch_size = 6, fps=29.97,**kwargs):
+  pr = base('full', num_gpus, vid_dur = vid_dur, batch_size = batch_size, fps=fps, **kwargs)
   return pr
 
 def unet_pit(num_gpus = 1, vid_dur = VidDur, batch_size = 24, **kwargs):

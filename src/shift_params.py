@@ -174,9 +174,9 @@ def shift_v1(num_gpus = 1, shift_dur = 4.2):
   return pr
 
 
-def cam_v1(num_gpus = 1, shift_dur = 4.2):
+def cam_v1(num_gpus = 1, shift_dur = 4.2, fps=29.97):
   total_dur = 10.1
-  fps = 29.97
+  fps = fps # Devu fix
   frame_dur = 1./fps
   samp_sr = 21000.
   spec_sr = 100.

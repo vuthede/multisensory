@@ -1,0 +1,5 @@
+ffmpeg
+tensorflow==1.15
+matplotlib
+pillow
+scipy

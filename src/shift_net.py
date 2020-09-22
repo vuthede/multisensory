@@ -519,6 +519,7 @@ class NetClf:
           tf.Graph().as_default()
         pr = self.pr
         self.sess = tf.Session()
+        print "Samples frames for model init: ", pr.sampled_frames
         self.ims_ph = tf.placeholder(
           tf.uint8, [1, pr.sampled_frames, pr.crop_im_dim, pr.crop_im_dim, 3])
         self.ims_resize_ph = tf.placeholder(
