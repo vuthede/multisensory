@@ -400,6 +400,13 @@ if __name__ == '__main__':
   arg.add_argument('--suffix', type = str, default = '')
   arg.add_argument('--max_full_height', type = int, default = 600)
 
+  # Our customized params
+  arg.add_argument('--videosegment_dir', type = str, default = "/media/Databases/preprocess_avspeech/segment", help = 'Directory to video segemnt')
+  arg.add_argument('--start_clip_index', type = int, default = 6, help = 'Sart clip index')
+  arg.add_argument('--n_process', type = int, default = 16, help = 'NUmber of process for parallell processing')
+
+
+
   #arg.set_defaults(cam = False)
 
   ##### Common set up for all processes
@@ -418,7 +425,8 @@ if __name__ == '__main__':
   import glob
   import pandas as pd
 
-  data = "/media/Databases/preprocess_avspeech/segment"
+  # Dir of video segments
+  data = arg.videosegment_dir
 
   videos = list(pd.read_csv("2faces.txt", header=None)[0])
   files = []
@@ -431,7 +439,7 @@ if __name__ == '__main__':
   for video in videos:
     clips = [f for f in os.listdir(data +"/" + video) if f.endswith('.mp4')]
     clips = [data + "/" + video +"/"+f for f in clips]
-    clips = clips[:6]
+    clips = clips[int(arg.start_clip_index):]
     files += clips
 
   arg_original = copy.deepcopy(arg)
@@ -510,7 +518,7 @@ print("File 0: ", files[0])
 process = Process(target=process_and_generate_audio_mask)
 
 def pool_handler(files):
-    n_process = 16
+    n_process = arg.n_process
     p = Pool(n_process)
     p.map(process_and_generate_audio_mask, files)
 
