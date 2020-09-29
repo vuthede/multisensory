@@ -418,13 +418,21 @@ if __name__ == '__main__':
   import glob
   import pandas as pd
 
-  data = "/home/vuthede/data/segment_clean/"
+  data = "/media/Databases/preprocess_avspeech/segment"
+
   videos = list(pd.read_csv("2faces.txt", header=None)[0])
   files = []
+  """
   for video in videos:
-    clips = glob.glob(f'{data}/{video}/*.mp4')
-    files.append(clips)
-  
+    clips = glob.glob(data+"/"+video+"/"+"*.mp4")
+    clips = clips[:2]
+    files += clips
+  """
+  for video in videos:
+    clips = [f for f in os.listdir(data +"/" + video) if f.endswith('.mp4')]
+    clips = [data + "/" + video +"/"+f for f in clips]
+    clips = clips[:6]
+    files += clips
 
   arg_original = copy.deepcopy(arg)
 
@@ -454,7 +462,8 @@ if __name__ == '__main__':
 
     if not os.path.exists(arg.vid_file):
       print 'Does not exist:', arg.vid_file
-      sys.exit(1)
+      #sys.exit(1)
+      return
 
     if arg.duration is None:
       arg.duration = arg.clip_dur + 0.01
@@ -494,15 +503,18 @@ if __name__ == '__main__':
       ims = ret['ims']
       print "Here is len of ims:", len(ims)
 
+print("Len files: ", len(files))
+print("File 0: ", files[0])
 
 
 process = Process(target=process_and_generate_audio_mask)
 
 def pool_handler(files):
-    n_process = 4
+    n_process = 16
     p = Pool(n_process)
     p.map(process_and_generate_audio_mask, files)
 
+#files = [files[0], files[0], files[0], files[0], files[0], files[0], files[0], files[0]]
 pool_handler(files)
 
 

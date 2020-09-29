@@ -217,7 +217,8 @@ def heatmap(frames, cam, lo_frac = 0.5, adapt = True, max_val = 35, videoin=None
     if not os.path.isdir(audiomask_dir):
       os.makedirs(audiomask_dir)
 
-    cv2.imwrite(audiomask_dir + "/" + str(i+frame_start) + ".png", vis)
+    cv2.imwrite("aduiomask.png", vis)
+    #cv2.imwrite(audiomask_dir + "/" + str(i+frame_start) + ".png", vis)
     # cv2.imshow("Heatmap1:", haha)
 
     #p = np.clip((frame_cam - lo)/float(hi - lo), 0, 1.)
@@ -410,7 +411,7 @@ if __name__ == '__main__':
   gpus = mu.set_gpus(gpus)
 
   import glob
-  data = "/home/vuthede/data/segment_clean/"
+  data = "/home/vtde/MyHelperModule/downloaddata/download_data_for_sound_of_pixel_paper/segment_clean_and_audio_mask_new"
   files = glob.glob(data +  "/*/*.mp4")
   for f in files[:1]:
     print "This is file----------------------------------------", f
@@ -418,7 +419,7 @@ if __name__ == '__main__':
     # f = "/home/vuthede/data/segment_clean/Oxymoron Antithesis Paradox/227.200000_230.960000.mp4"
     # f = "/home/vuthede/data/segment_clean/Oxymoron Antithesis Paradox/215.520000_226.320000.mp4"
 
-    f = "/home/vuthede/data/segment_clean/Catherine Steiner-Adair How Technology Affects Child Development/90.131711_93.176422.mp4"
+    #f = "/home/vuthede/data/segment_clean/Catherine Steiner-Adair How Technology Affects Child Development/90.131711_93.176422.mp4"
     duration = get_duration_video_file(f,None)
     print "Duration haha:", duration
     # arg.duration_mult = np.ceil(duration/sep_params.VidDur) 
