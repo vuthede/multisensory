@@ -217,11 +217,13 @@ def heatmap(frames, cam, lo_frac = 0.5, adapt = True, max_val = 35, videoin=None
 
     # haha = cv2.cvtColor(vis, cv2.COLOR_BGR2GRAY)
     
-    audiomask_dir = videoin+"_audiomask"
+    audiomask_dir = videoin.replace("segment", "audiomask")
+    # audiomask_dir = videoin+"_audiomask"
     if not os.path.isdir(audiomask_dir):
       os.makedirs(audiomask_dir)
 
-    cv2.imwrite(audiomask_dir + "/" + str(i+frame_start) + ".png", vis)
+    if i % 4==0:
+      cv2.imwrite(audiomask_dir + "/" + str(i+frame_start) + ".png", vis)
     # cv2.imshow("Heatmap1:", haha)
 
     #p = np.clip((frame_cam - lo)/float(hi - lo), 0, 1.)
@@ -497,7 +499,8 @@ if __name__ == '__main__':
 process = Process(target=process_and_generate_audio_mask)
 
 def pool_handler(files):
-    p = Pool(3)
+    n_process = 4
+    p = Pool(n_process)
     p.map(process_and_generate_audio_mask, files)
 
 pool_handler(files)
