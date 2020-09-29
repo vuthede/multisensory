@@ -411,15 +411,16 @@ if __name__ == '__main__':
   gpus = mu.set_gpus(gpus)
 
   import glob
-  data = "/home/vtde/MyHelperModule/downloaddata/download_data_for_sound_of_pixel_paper/segment_clean_and_audio_mask_new"
-  files = glob.glob(data +  "/*/*.mp4")
-  for f in files[:1]:
+  # data = "/home/vtde/MyHelperModule/downloaddata/download_data_for_sound_of_pixel_paper/segment_clean_and_audio_mask_new"
+  # files = glob.glob(data +  "/*/*.mp4")
+  for f in ["a", "v"]:
     print "This is file----------------------------------------", f
 
     # f = "/home/vuthede/data/segment_clean/Oxymoron Antithesis Paradox/227.200000_230.960000.mp4"
     # f = "/home/vuthede/data/segment_clean/Oxymoron Antithesis Paradox/215.520000_226.320000.mp4"
 
     #f = "/home/vuthede/data/segment_clean/Catherine Steiner-Adair How Technology Affects Child Development/90.131711_93.176422.mp4"
+    f = "/home/vuthede/51.318000_55.588000.mp4"
     duration = get_duration_video_file(f,None)
     print "Duration haha:", duration
     # arg.duration_mult = np.ceil(duration/sep_params.VidDur) 

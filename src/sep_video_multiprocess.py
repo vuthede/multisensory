@@ -10,6 +10,12 @@ from multiprocessing import Pool
 import copy
 pj = ut.pjoin
 
+
+def write_log(log):
+    with open("log.txt", "a") as f:
+        f.write(log)
+        f.write("\n")
+
 class NetClf:
   def __init__(self, pr, sess = None, gpu = None, restore_only_shift = False):
     self.pr = pr
@@ -436,11 +442,23 @@ if __name__ == '__main__':
     clips = clips[:2]
     files += clips
   """
+
+  output = arg.videosegment_dir.replace("segment","audiomask")
+  processed_files = glob.glob(output + "/*/*.mp4")
+  processed_files = [f.replace("audiomask", "segment") for f in processed_files]
+
   for video in videos:
     clips = [f for f in os.listdir(data +"/" + video) if f.endswith('.mp4')]
     clips = [data + "/" + video +"/"+f for f in clips]
     clips = clips[int(arg.start_clip_index):]
     files += clips
+
+  
+  print "Processed files len: ", len(processed_files)
+  print "Total files: ", len(files)
+  files = list(set(files)-set(processed_files))
+  print "Will process only : ", len(files)
+
 
   arg_original = copy.deepcopy(arg)
 
@@ -504,7 +522,13 @@ if __name__ == '__main__':
       t = ut.make_mod(t, (1./pr.fps))
       frame_start = int(t*pr.fps - arg.start*pr.fps)
       print "Duration of segment : ", arg.clip_dur
-      ret = run(arg.vid_file, t, arg.clip_dur, pr, gpus[0], mask = arg.mask, arg = arg, net = net)
+      try:
+        ret = run(arg.vid_file, t, arg.clip_dur, pr, gpus[0], mask = arg.mask, arg = arg, net = net)
+      except Exception as e:
+        log =  "There is error when processing file : " + str( arg.vid_file) + "\n" + "Here is detail excpetion: " + str(e) + "\n"
+        write_log(log)
+        print log
+
       if ret is None:
         print("Noneeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee")
         continue

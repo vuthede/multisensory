@@ -7,7 +7,7 @@
 `cd src`
 
 ```
-python sep_video_multiprocess.py --cam \
+python sep_video_multiprocess.py ../data/translator.mp4 --cam --gpu -1\
                     --videosegment_dir /media/Databases/preprocess_avspeech/segment \
                     --start_clip_index 6 \
                     --n_process 16
