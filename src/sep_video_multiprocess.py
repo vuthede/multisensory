@@ -441,15 +441,16 @@ if __name__ == '__main__':
     clips = clips[:2]
     files += clips
   """
-
-  output = arg.videosegment_dir.replace("segment", "audiomask")
+ # print(data)
+  output = data.replace("segment", "audiomask")
   processed_files = glob.glob(output + "/*/*.mp4")
   processed_files = [f.replace("audiomask", "segment") for f in processed_files]
 
+  #print(output)
   for video in videos:
     clips = [f for f in os.listdir(data +"/" + video) if f.endswith('.mp4')]
     clips = [data + "/" + video +"/"+f for f in clips]
-    clips = clips[:6]
+    clips = clips[int(arg.start_clip_index):]
     files += clips
   
   #print processed_files[0], files[0]
