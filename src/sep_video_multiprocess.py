@@ -8,11 +8,12 @@ import multiprocessing
 from multiprocessing import Process
 from multiprocessing import Pool
 import copy
+import traceback
 pj = ut.pjoin
 
-
+# De vu add log
 def write_log(log):
-    with open("log.txt", "a") as f:
+    with open("error.txt", "a") as f:
         f.write(log)
         f.write("\n")
 
@@ -406,13 +407,6 @@ if __name__ == '__main__':
   arg.add_argument('--suffix', type = str, default = '')
   arg.add_argument('--max_full_height', type = int, default = 600)
 
-  # Our customized params
-  arg.add_argument('--videosegment_dir', type = str, default = "/media/Databases/preprocess_avspeech/segment", help = 'Directory to video segemnt')
-  arg.add_argument('--start_clip_index', type = int, default = 6, help = 'Sart clip index')
-  arg.add_argument('--n_process', type = int, default = 16, help = 'NUmber of process for parallell processing')
-
-
-
   #arg.set_defaults(cam = False)
 
   ##### Common set up for all processes
@@ -431,8 +425,7 @@ if __name__ == '__main__':
   import glob
   import pandas as pd
 
-  # Dir of video segments
-  data = arg.videosegment_dir
+  data = "/media/Databases/preprocess_avspeech/segment"
 
   videos = list(pd.read_csv("2faces.txt", header=None)[0])
   files = []
@@ -443,106 +436,109 @@ if __name__ == '__main__':
     files += clips
   """
 
-  output = arg.videosegment_dir.replace("segment","audiomask")
+  output = "/media/Databases/preprocess_avspeech/audiomask"
   processed_files = glob.glob(output + "/*/*.mp4")
   processed_files = [f.replace("audiomask", "segment") for f in processed_files]
 
   for video in videos:
     clips = [f for f in os.listdir(data +"/" + video) if f.endswith('.mp4')]
     clips = [data + "/" + video +"/"+f for f in clips]
-    clips = clips[int(arg.start_clip_index):]
+    clips = clips[:6]
     files += clips
-
   
+  #print processed_files[0], files[0]
   print "Processed files len: ", len(processed_files)
   print "Total files: ", len(files)
   files = list(set(files)-set(processed_files))
   print "Will process only : ", len(files)
-
-
+  
   arg_original = copy.deepcopy(arg)
 
   def process_and_generate_audio_mask(f):
-    arg = copy.deepcopy(arg_original)
-    duration = get_duration_video_file(f,None)
-    arg.duration = duration
-    arg.vid_file = f
-    if arg.duration_mult is not None:
-      pr = sep_params.full()
-      step = 0.001 * pr.frame_step_ms
-      length = 0.001 * pr.frame_length_ms
-      arg.clip_dur = length + step*(0.5+pr.spec_len)*arg.duration_mult
+    try:
+      arg = copy.deepcopy(arg_original)
+      duration = get_duration_video_file(f,None)
+      arg.duration = duration
+      arg.vid_file = f
+      if arg.duration_mult is not None:
+        pr = sep_params.full()
+        step = 0.001 * pr.frame_step_ms
+        length = 0.001 * pr.frame_length_ms
+        arg.clip_dur = length + step*(0.5+pr.spec_len)*arg.duration_mult
 
-    fn = getattr(sep_params, arg.model)
-    pr = fn(vid_dur = arg.clip_dur, fps=get_fps_video_file(f))
-    print "Real fps and pr fps: ", get_fps_video_file(f), ".pr:", pr.fps
-    print "real duration.  arg.clip_dur: ", duration, ". ",  arg.clip_dur
-    print "Duration mul: ", arg.duration_mult
+      fn = getattr(sep_params, arg.model)
+      pr = fn(vid_dur = arg.clip_dur, fps=get_fps_video_file(f))
+      print "Real fps and pr fps: ", get_fps_video_file(f), ".pr:", pr.fps
+      print "real duration.  arg.clip_dur: ", duration, ". ",  arg.clip_dur
+      print "Duration mul: ", arg.duration_mult
 
 
-    if arg.clip_dur is None:
-      arg.clip_dur = pr.vid_dur
+      if arg.clip_dur is None:
+        arg.clip_dur = pr.vid_dur
 
-    pr.input_rms = np.sqrt(0.1**2 + 0.1**2)
-    pr.model_path = '../results/nets/sep/%s/net.tf-%d' % (pr.name, pr.train_iters)
+      pr.input_rms = np.sqrt(0.1**2 + 0.1**2)
+      pr.model_path = '../results/nets/sep/%s/net.tf-%d' % (pr.name, pr.train_iters)
 
-    if not os.path.exists(arg.vid_file):
-      print 'Does not exist:', arg.vid_file
-      #sys.exit(1)
-      return
+      if not os.path.exists(arg.vid_file):
+        print 'Does not exist:', arg.vid_file
+        #sys.exit(1)
+        return
 
-    if arg.duration is None:
-      arg.duration = arg.clip_dur + 0.01
+      if arg.duration is None:
+        arg.duration = arg.clip_dur + 0.01
 
-    print arg.duration, arg.clip_dur
-    full_dur = arg.duration
-    #full_dur = min(arg.duration, ut.video_length(arg.vid_file))
-    #full_dur = arg.duration
-    step_dur = arg.clip_dur/2.
-    filled = np.zeros(int(np.ceil(full_dur * pr.samp_sr)), 'bool')
-    full_samples_fg = np.zeros(filled.shape, 'float32')
-    full_samples_bg = np.zeros(filled.shape, 'float32')
-    full_samples_src = np.zeros(filled.shape, 'float32')
-    arg.start = ut.make_mod(arg.start, (1./pr.fps))
+      print arg.duration, arg.clip_dur
+      full_dur = arg.duration
+      #full_dur = min(arg.duration, ut.video_length(arg.vid_file))
+      #full_dur = arg.duration
+      step_dur = arg.clip_dur/2.
+      filled = np.zeros(int(np.ceil(full_dur * pr.samp_sr)), 'bool')
+      full_samples_fg = np.zeros(filled.shape, 'float32')
+      full_samples_bg = np.zeros(filled.shape, 'float32')
+      full_samples_src = np.zeros(filled.shape, 'float32')
+      arg.start = ut.make_mod(arg.start, (1./pr.fps))
 
-    print "Full dur, clip dur: ", full_dur, ". ", arg.clip_dur
-    ts = np.arange(arg.start, arg.start + full_dur-arg.clip_dur, arg.clip_dur)
-    if len(ts)==1:
-      ts = np.append(ts, [full_dur-arg.clip_dur])
-    # ts= [0, arg.clip_dur]
-    print "Ts:", ts
-    # sys.exit()
-    full_ims = [None] * int(np.ceil(full_dur * pr.fps))
-    print "Full imgs:", len(full_ims)
-    # sys.exit()
+      print "Full dur, clip dur: ", full_dur, ". ", arg.clip_dur
+      ts = np.arange(arg.start, arg.start + full_dur-arg.clip_dur, arg.clip_dur)
+      if len(ts)==1:
+        ts = np.append(ts, [full_dur-arg.clip_dur])
+      # ts= [0, arg.clip_dur]
+      print "Ts:", ts
+      # sys.exit()
+      full_ims = [None] * int(np.ceil(full_dur * pr.fps))
+      print "Full imgs:", len(full_ims)
+      # sys.exit()
 
-    net = NetClf(pr, gpu = gpus[0])
+      net = NetClf(pr, gpu = gpus[0])
 
-    for t in ut.time_est(ts):
-      t = ut.make_mod(t, (1./pr.fps))
-      frame_start = int(t*pr.fps - arg.start*pr.fps)
-      print "Duration of segment : ", arg.clip_dur
-      try:
+      for t in ut.time_est(ts):
+        t = ut.make_mod(t, (1./pr.fps))
+        frame_start = int(t*pr.fps - arg.start*pr.fps)
+        print "Duration of segment : ", arg.clip_dur
         ret = run(arg.vid_file, t, arg.clip_dur, pr, gpus[0], mask = arg.mask, arg = arg, net = net)
-      except Exception as e:
-        log =  "There is error when processing file : " + str( arg.vid_file) + "\n" + "Here is detail excpetion: " + str(e) + "\n"
-        write_log(log)
-        print log
+        
+        if ret is None:
+          print("Noneeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee")
+          continue
+        ims = ret['ims']
+        print "Here is len of ims:", len(ims)
+    except Exception as e:
+      log =  "There is error when processing file : " + str(arg.vid_file) + "\n" + "Here is detail excpetion: " + str(e) + "\n"
+      write_log(log)
+      print log    
+      traceback.print_exc()   
 
-      if ret is None:
-        print("Noneeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee")
-        continue
-      ims = ret['ims']
-      print "Here is len of ims:", len(ims)
 
-print("Len files: ", len(files))
-print("File 0: ", files[0])
+
+
+#print("Len files: ", len(files))
+#print("File 0: ", files[0])
 
 
 process = Process(target=process_and_generate_audio_mask)
 
 def pool_handler(files):
-    n_process = arg.n_process
+    n_process = 16
     p = Pool(n_process)
     p.map(process_and_generate_audio_mask, files)
 
