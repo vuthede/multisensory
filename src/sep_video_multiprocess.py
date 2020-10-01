@@ -1,15 +1,25 @@
 # Separate on- and off-screen sound from video file. See README for usage examples.
+
 import aolib.util as ut, aolib.img as ig, os, numpy as np, tensorflow as tf, tfutil as mu, scipy.io, sys, aolib.imtable as imtable, pylab, argparse, shift_params, shift_net
 import sourcesep, sep_params
 import aolib.sound as sound
 from aolib.sound import Sound
 import cv2
+
 import multiprocessing
 from multiprocessing import Process
 from multiprocessing import Pool
 import copy
 import traceback
+from datetime import date
+
+def get_current_time():
+  today= date.today()
+  t = today.strftime("%d-%m-%Y_%H:%M:%S")
+  return t
+
 pj = ut.pjoin
+print "Begining of trhe program"
 
 # De vu add log
 def write_log(log):
@@ -433,7 +443,7 @@ if __name__ == '__main__':
   data = arg.videosegment_dir # "/media/Databases/preprocess_avspeech/segment"
 
 
-  videos = list(pd.read_csv("2faces.txt", header=None)[0])
+  clips = list(pd.read_csv("2faces_current.txt", header=None)[0])
   files = []
   """
   for video in videos:
@@ -441,22 +451,49 @@ if __name__ == '__main__':
     clips = clips[:2]
     files += clips
   """
- # print(data)
+  
+  # Processed files . not removing empty folder
   output = data.replace("segment", "audiomask")
-  processed_files = glob.glob(output + "/*/*.mp4")
-  processed_files = [f.replace("audiomask", "segment") for f in processed_files]
+  if os.path.isdir(output):
+    processed_files = glob.glob(output + "/*/*.mp4")
+    processed_files = [f.replace("audiomask", "segment") for f in processed_files]
+  else:
+    processed_files = []
+
+  def count_empty_folder(dir):
+      empty_denoised_folder = []
+      folders = glob.glob(dir+"/*/*.mp4")
+      i = 0
+      for fo in folders:
+          print(fo)
+          jpgs = glob.glob(fo + "/*.png")
+          print(len(jpgs))
+          if len(jpgs)==0:
+              empty_denoised_folder.append(fo)
+      return empty_denoised_folder
+
+
+  empty_outputs = count_empty_folder(output)
+  empty_files = [i.replace("audiomask", "segment")for i in empty_outputs]
+  
+
 
   #print(output)
-  for video in videos:
-    clips = [f for f in os.listdir(data +"/" + video) if f.endswith('.mp4')]
-    clips = [data + "/" + video +"/"+f for f in clips]
-    clips = clips[int(arg.start_clip_index):]
-    files += clips
-  
+  # for clip in clips:
+  #   clips = [f for f in os.listdir(data +"/" + video) if f.endswith('.mp4')]
+  #   clips = [data + "/" + video +"/"+f for f in clips]
+  #   clips = clips[int(arg.start_clip_index):]
+  #   files += clips
+
+  files = [data+"/"+c  for c in clips]
+
   #print processed_files[0], files[0]
   print "Processed files len: ", len(processed_files)
   print "Total files: ", len(files)
+  print "Empty files:", len(empty_files)
   files = list(set(files)-set(processed_files))
+  files =set(files).union(empty_files)
+
   print "Will process only : ", len(files)
   
   arg_original = copy.deepcopy(arg)
@@ -541,8 +578,8 @@ if __name__ == '__main__':
 #print("Len files: ", len(files))
 #print("File 0: ", files[0])
 
+# BAckup old log file
 
-process = Process(target=process_and_generate_audio_mask)
 
 def pool_handler(files):
     n_process = int(arg_original.n_process)
@@ -550,7 +587,9 @@ def pool_handler(files):
     p.map(process_and_generate_audio_mask, files)
 
 #files = [files[0], files[0], files[0], files[0], files[0], files[0], files[0], files[0]]
-pool_handler(files)
+# if os.path.isfile("error.txt"):
+#   os.system('mv error.txt' + ' error_' + get_current_time() +'.txt')
+# pool_handler(files)
 
 
 """
